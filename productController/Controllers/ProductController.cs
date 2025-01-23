@@ -9,6 +9,7 @@ using Data;
 using Data.DTOs;
 using Data.Models;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using productController.Services;
 
 namespace productController.Controllers
 {
@@ -18,23 +19,28 @@ namespace productController.Controllers
     {
         private readonly AppDbContext _context;
 
-        public ProductController(AppDbContext context)
+        private readonly FileService _fileService;
+
+        public ProductController(AppDbContext context, FileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return Ok(await _context.Products.ToListAsync());
+            return Ok(await _context.Products.Include(e => e.FileRecord).ToListAsync());
         }
 
 
         [HttpGet]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(e => e.FileRecord)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
             {
@@ -77,19 +83,32 @@ namespace productController.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(CreateProduct product)
+        public async Task<ActionResult<Product>> PostProduct(CreateProduct createProduct)
         {
-            EntityEntry<Product> x;
-            x = await _context.Products.AddAsync(new Product
+            var result = (await _context.Products.AddAsync(new Product
                 {
-                    Name = product.Name,
-                    Image = product.Image
+                    Name = createProduct.Name,
+                    FileRecordId = createProduct.FileId,
                 }
-            );
-            
+            )).Entity;
+
             await _context.SaveChangesAsync();
-            
-            return Ok(x.Entity);
+
+            var file = await _context.FileRecords.FindAsync(result.FileRecordId);
+
+            if (result == null)
+            {
+                return NotFound(); // Handle the case where the product is not found
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var images = await _fileService.GetImages(result.Id, baseUrl);
+
+            return Ok(new
+            {
+                Naame = result.Name,
+                Image = images,
+            });
         }
 
 

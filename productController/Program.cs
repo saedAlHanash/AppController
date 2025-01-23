@@ -1,6 +1,7 @@
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using productController.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(optionsAction: optionsBuilder =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<FileService>();
 builder.Services.AddControllers(); // إضافة خدمات التحكم (Controllers) إلى التطبيق
 
 var app = builder.Build(); // بناء التطبيق

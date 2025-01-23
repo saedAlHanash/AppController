@@ -2,9 +2,9 @@
 
 public class FileRecord
 {
-    public int Id { get; set; } // Primary Key
+    public int Id { get; set; }
 
-    public string FileName { get; set; } // Original file name
+    public string FileName { get; set; }
 
     public string FilePath { get; set; }
 
@@ -12,8 +12,17 @@ public class FileRecord
 
     public string MediumFilePath { get; set; }
 
-    public long FileSize { get; set; } // File size in bytes
+    public long FileSize { get; set; }
 
 
-    public DateTime UploadedAt { get; set; } = DateTime.UtcNow; // Upload timestamp
+    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class FileImages
+{
+    public string Url { get; set; }
+
+    public string UrlThumb { get; set; }
+
+    public string UrlMedium { get; set; }
 }

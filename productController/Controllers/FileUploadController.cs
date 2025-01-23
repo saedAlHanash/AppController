@@ -76,7 +76,8 @@ public class FileUploadController : ControllerBase
 
     private async Task CompressImage(IFormFile file, string fileName)
     {
-        if (IsImageByExtension(file.FileName)) return;
+        if (!IsImageByExtension(file.FileName)) return;
+
         var directories = GetDirectories();
 
         var thumbnailPath = Path.Combine(directories[1], fileName);
@@ -91,7 +92,7 @@ public class FileUploadController : ControllerBase
             }));
 
 
-          await  image.SaveAsJpegAsync(path: mediumPath);
+            await image.SaveAsJpegAsync(path: mediumPath);
 
             image.Mutate(x => x.Resize(new ResizeOptions
             {
@@ -99,7 +100,7 @@ public class FileUploadController : ControllerBase
                 Mode = ResizeMode.Crop
             }));
 
-           await image.SaveAsJpegAsync(path: thumbnailPath);
+            await image.SaveAsJpegAsync(path: thumbnailPath);
         }
     }
 
@@ -138,4 +139,6 @@ public class FileUploadController : ControllerBase
             uploadsMediumFolder
         ];
     }
+
+
 }
