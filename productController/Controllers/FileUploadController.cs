@@ -24,6 +24,8 @@ public class FileUploadController : ControllerBase
     [HttpPost("upload")]
     public async Task<IActionResult> UploadFile(IFormFile file)
     {
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
         if (file == null || file.Length == 0)
         {
             return BadRequest("No file uploaded.");
@@ -46,26 +48,28 @@ public class FileUploadController : ControllerBase
         var fileRecord = new FileRecord
         {
             FileName = file.FileName,
-            FilePath = filePath,
             FileSize = file.Length,
-            ThumbFilePath = $"thumb_{fileName}",
-            MediumFilePath = $"medium_{fileName}",
+            FilePath = $"/uploads/{fileName}",
+            ThumbFilePath = $"/thumbs/{fileName}",
+            MediumFilePath = $"/mediums/{fileName}",
         };
 
         _context.FileRecords.Add(fileRecord);
-        
+
         await _context.SaveChangesAsync();
-        
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
         var fileUrl = $"{baseUrl}/uploads/{fileName}";
-        
+        var thumbUrl = $"{baseUrl}/thumbs/{fileName}";
+        var mediumUrl = $"{baseUrl}/mediums/{fileName}";
+
         return Ok(new
             {
                 fileRecord.Id,
                 fileRecord.FileName,
                 fileRecord.FileSize,
-                Saed = "sdasf",
-                Url = fileUrl
+                Url = fileUrl,
+                ThumbUrl = thumbUrl,
+                MediumUrl = mediumUrl,
             }
         );
     }
@@ -75,8 +79,8 @@ public class FileUploadController : ControllerBase
         if (IsImageByExtension(file.FileName)) return;
         var directories = GetDirectories();
 
-        var thumbnailPath = Path.Combine(directories[1], $"thumb_{fileName}");
-        var mediumPath = Path.Combine(directories[2], $"medium_{fileName}");
+        var thumbnailPath = Path.Combine(directories[1], fileName);
+        var mediumPath = Path.Combine(directories[2], fileName);
 
         using (var image = await Image.LoadAsync(file.OpenReadStream()))
         {
@@ -87,7 +91,7 @@ public class FileUploadController : ControllerBase
             }));
 
 
-            await image.SaveAsync(mediumPath);
+          await  image.SaveAsJpegAsync(path: mediumPath);
 
             image.Mutate(x => x.Resize(new ResizeOptions
             {
@@ -95,7 +99,7 @@ public class FileUploadController : ControllerBase
                 Mode = ResizeMode.Crop
             }));
 
-            await image.SaveAsync(thumbnailPath);
+           await image.SaveAsJpegAsync(path: thumbnailPath);
         }
     }
 
