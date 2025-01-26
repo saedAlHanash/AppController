@@ -1,4 +1,5 @@
 ﻿using Data;
+using Data.DTOs;
 using Data.Models;
 
 namespace productController.Services;
@@ -23,9 +24,9 @@ public class FileService
 
         return new FileImages
         {
-            Url = fileUrl,
-            UrlThumb = thumbUrl,
-            UrlMedium = mediumUrl,
+            Thumpnil = fileUrl,
+            Medium = thumbUrl,
+            Orgenal = mediumUrl,
         };
     }
 }

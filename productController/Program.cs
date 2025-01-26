@@ -1,4 +1,5 @@
 using Data;
+using Data.MappingProfiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using productController.Services;
@@ -13,6 +14,9 @@ builder.Services.AddDbContext<AppDbContext>(optionsAction: optionsBuilder =>
 // إضافة خدمات استكشاف النقاط النهائية (Endpoints) وSwagger للتوثيق
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+AutoMapperExtension.ConfigureServices(builder.Services);
 
 builder.Services.AddScoped<FileService>();
 builder.Services.AddControllers(); // إضافة خدمات التحكم (Controllers) إلى التطبيق

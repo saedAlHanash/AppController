@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,17 +22,28 @@ namespace productController.Controllers
 
         private readonly FileService _fileService;
 
-        public ProductController(AppDbContext context, FileService fileService)
+        private readonly IMapper _mapper;
+
+        public ProductController(AppDbContext context, FileService fileService, IMapper mapper)
         {
             _context = context;
             _fileService = fileService;
+            _mapper = mapper;
         }
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<List<ProductDto>>> GetProducts()
         {
-            return Ok(await _context.Products.Include(e => e.FileRecord).ToListAsync());
+            var list = await _context.Products.Include(e => e.FileRecord).ToListAsync();
+            var response = _mapper.Map<List<ProductDto>>(list,
+                opts =>
+                {
+                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                    
+                    opts.Items["baseUrl"] = baseUrl;
+                });
+            return Ok(response);
         }
 
 
@@ -101,13 +113,11 @@ namespace productController.Controllers
                 return NotFound(); // Handle the case where the product is not found
             }
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var images = await _fileService.GetImages(result.Id, baseUrl);
+            
 
             return Ok(new
             {
                 Naame = result.Name,
-                Image = images,
             });
         }
 

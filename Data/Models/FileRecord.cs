@@ -18,11 +18,3 @@ public class FileRecord
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 }
 
-public class FileImages
-{
-    public string Url { get; set; }
-
-    public string UrlThumb { get; set; }
-
-    public string UrlMedium { get; set; }
-}
