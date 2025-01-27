@@ -1,4 +1,5 @@
 ﻿using Data;
+using Data.DTOs;
 using Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
@@ -7,138 +8,73 @@ using SixLabors.ImageSharp.Processing;
 namespace productController.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class FileUploadController : ControllerBase
+[Route("api/[controller]/[action]")]
+public class FileUploadController(AppDbContext context, IConfiguration config) : ControllerBase
 {
-    private readonly AppDbContext _context;
-
-
-    private readonly IConfiguration _config;
-
-    public FileUploadController(AppDbContext context, IConfiguration config)
+    [HttpPost]
+    public async Task<IActionResult> UploadFile([FromForm] CreateFileDto input)
     {
-        _config = config;
-        _context = context;
-    }
-
-    [HttpPost("upload")]
-    public async Task<IActionResult> UploadFile(IFormFile file)
-    {
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-
-        if (file == null || file.Length == 0)
+        var file = input.filel;
+        if (file.Length == 0)
         {
             return BadRequest("No file uploaded.");
         }
 
-        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+        var fileName = Guid.NewGuid() + file.FileExtension();
 
-        var directories = GetDirectories();
+        var filePath = Path.Combine(config.Uploads(), fileName);
 
-        var filePath = Path.Combine(directories[0], fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        await using (var stream = new FileStream(filePath, FileMode.Create))
         {
             await file.CopyToAsync(stream);
         }
 
-        await CompressImage(file: file, fileName: fileName);
+        await CompressImage(file: file);
 
 
         var fileRecord = new FileRecord
         {
             FileName = file.FileName,
             FileSize = file.Length,
-            FilePath = $"/uploads/{fileName}",
-            ThumbFilePath = $"/thumbs/{fileName}",
-            MediumFilePath = $"/mediums/{fileName}",
+            FilePath = $"uploads/{fileName}",
+            ThumbFilePath = $"thumbs/{fileName}",
+            MediumFilePath = $"mediums/{fileName}",
         };
 
-        _context.FileRecords.Add(fileRecord);
+        var x = context.FileRecords.Add(fileRecord).Entity;
 
-        await _context.SaveChangesAsync();
-
-        var fileUrl = $"{baseUrl}/uploads/{fileName}";
-        var thumbUrl = $"{baseUrl}/thumbs/{fileName}";
-        var mediumUrl = $"{baseUrl}/mediums/{fileName}";
+        await context.SaveChangesAsync();
 
         return Ok(new
             {
                 fileRecord.Id,
                 fileRecord.FileName,
                 fileRecord.FileSize,
-                Url = fileUrl,
-                ThumbUrl = thumbUrl,
-                MediumUrl = mediumUrl,
             }
         );
     }
 
-    private async Task CompressImage(IFormFile file, string fileName)
+    private async Task CompressImage(IFormFile file)
     {
-        if (!IsImageByExtension(file.FileName)) return;
+        if (!file.FileName.IsImageByExtension()) return;
 
-        var directories = GetDirectories();
 
-        var thumbnailPath = Path.Combine(directories[1], fileName);
-        var mediumPath = Path.Combine(directories[2], fileName);
-
-        using (var image = await Image.LoadAsync(file.OpenReadStream()))
+        using var image = await Image.LoadAsync(file.OpenReadStream());
+        image.Mutate(x => x.Resize(new ResizeOptions
         {
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new Size(600 * 2, 800 * 2),
-                Mode = ResizeMode.Max,
-            }));
+            Size = new Size(600 * 2, 800 * 2),
+            Mode = ResizeMode.Max,
+        }));
 
 
-            await image.SaveAsJpegAsync(path: mediumPath);
+        await image.SaveAsJpegAsync(path: config.Medium());
 
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new Size(150, 150), // Thumbnail size
-                Mode = ResizeMode.Crop
-            }));
+        image.Mutate(x => x.Resize(new ResizeOptions
+        {
+            Size = new Size(150, 150), // Thumbnail size
+            Mode = ResizeMode.Crop
+        }));
 
-            await image.SaveAsJpegAsync(path: thumbnailPath);
-        }
+        await image.SaveAsJpegAsync(path: config.Thumb());
     }
-
-    private bool IsImageByExtension(string fileName)
-    {
-        string[] validExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp" };
-        var fileExtension = Path.GetExtension(fileName).ToLowerInvariant();
-        return validExtensions.Contains(fileExtension);
-    }
-
-    private List<string> GetDirectories()
-    {
-        var uploadsFolder = Path.Combine(_config["ResourcesPath"], "uploads");
-        var uploadsThumbFolder = Path.Combine(_config["ResourcesPath"], "thumbs");
-        var uploadsMediumFolder = Path.Combine(_config["ResourcesPath"], "mediums");
-
-        if (!Directory.Exists(uploadsFolder))
-        {
-            Directory.CreateDirectory(uploadsFolder);
-        }
-
-        if (!Directory.Exists(uploadsThumbFolder))
-        {
-            Directory.CreateDirectory(uploadsThumbFolder);
-        }
-
-        if (!Directory.Exists(uploadsMediumFolder))
-        {
-            Directory.CreateDirectory(uploadsMediumFolder);
-        }
-
-        return
-        [
-            uploadsFolder,
-            uploadsThumbFolder,
-            uploadsMediumFolder
-        ];
-    }
-
-
 }

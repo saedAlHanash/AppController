@@ -1,15 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Data;
 using Data.DTOs;
 using Data.Models;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using productController.Services;
 
 namespace productController.Controllers
@@ -35,12 +29,13 @@ namespace productController.Controllers
         [HttpGet]
         public async Task<ActionResult<List<ProductDto>>> GetProducts()
         {
+            AppProvider.Instance.BaseUrl = $"{Request.Scheme}://{Request.Host}";
             var list = await _context.Products.Include(e => e.FileRecord).ToListAsync();
             var response = _mapper.Map<List<ProductDto>>(list,
                 opts =>
                 {
                     var baseUrl = $"{Request.Scheme}://{Request.Host}";
-                    
+
                     opts.Items["baseUrl"] = baseUrl;
                 });
             return Ok(response);
@@ -50,6 +45,7 @@ namespace productController.Controllers
         [HttpGet]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
+            AppProvider.Instance.BaseUrl = $"{Request.Scheme}://{Request.Host}";
             var product = await _context.Products
                 .Include(e => e.FileRecord)
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -113,7 +109,6 @@ namespace productController.Controllers
                 return NotFound(); // Handle the case where the product is not found
             }
 
-            
 
             return Ok(new
             {

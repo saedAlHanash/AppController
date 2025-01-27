@@ -1,7 +1,12 @@
-﻿namespace Data.DTOs;
+﻿using Microsoft.AspNetCore.Http;
+
+namespace Data.DTOs;
 
 public class FileDto
 {
+}public class CreateFileDto
+{
+        public IFormFile filel { set; get; }
 }
 
 public class FileImages

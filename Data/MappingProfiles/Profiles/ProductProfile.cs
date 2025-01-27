@@ -14,21 +14,8 @@ public class ProductProfile : Profile
 
 
         CreateMap<FileRecord, FileImages>()
-            .ForMember(
-                dest => dest.Orgenal,
-                opt => opt.MapFrom((record, images, arg3, context) =>
-                {
-                    return $"{context.Items["baseUrl"]}/{record.FileName}";
-                }))
-            .ForMember(dest => dest.Medium,
-                opt => opt.MapFrom((record, images, arg3, context) =>
-                {
-                    return $"{context.Items["baseUrl"]}/{record.ThumbFilePath}";
-                }))
-            .ForMember(dest => dest.Thumpnil,
-                opt => opt.MapFrom((record, images, arg3, context) =>
-                {
-                    return $"{context.Items["baseUrl"]}/{record.MediumFilePath}";
-                }));
+            .ForMember(dest => dest.Orgenal, opt => opt.MapFrom((record) => record.FileName.FixUrlFile()))
+            .ForMember(dest => dest.Medium, opt => opt.MapFrom((record) => record.ThumbFilePath.FixUrlFile()))
+            .ForMember(dest => dest.Thumpnil, opt => opt.MapFrom((record) => record.MediumFilePath.FixUrlFile()));
     }
 }
