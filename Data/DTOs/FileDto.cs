@@ -3,17 +3,18 @@
 namespace Data.DTOs;
 
 public class FileDto
+
 {
-}public class CreateFileDto
-{
-        public IFormFile filel { set; get; }
+    public required int Id { set; get; }
+    
+    public required string Thumpnil { set; get; }
+
+    public required string Medium { set; get; }
+
+    public required string Orgenal { set; get; }
 }
 
-public class FileImages
+public class CreateFileDto
 {
-        public string Thumpnil { set; get; }
-    
-        public string Medium { set; get; }
-    
-        public string Orgenal { set; get; }
+    public IFormFile filel { set; get; }
 }

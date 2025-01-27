@@ -1,7 +1,9 @@
-﻿using Data;
+﻿using AutoMapper;
+using Data;
 using Data.DTOs;
 using Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
@@ -9,12 +11,15 @@ namespace productController.Controllers;
 
 [ApiController]
 [Route("api/[controller]/[action]")]
-public class FileUploadController(AppDbContext context, IConfiguration config) : ControllerBase
+public class FileUploadController(AppDbContext context, IConfiguration config, IMapper mapper) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> UploadFile([FromForm] CreateFileDto input)
     {
         var file = input.filel;
+
+        AppProvider.Instance.BaseUrl = Request.BaseUrl();
+
         if (file.Length == 0)
         {
             return BadRequest("No file uploaded.");
@@ -22,14 +27,13 @@ public class FileUploadController(AppDbContext context, IConfiguration config) :
 
         var fileName = Guid.NewGuid() + file.FileExtension();
 
-        var filePath = Path.Combine(config.Uploads(), fileName);
 
-        await using (var stream = new FileStream(filePath, FileMode.Create))
+        await CompressImage(file: file, fileName: fileName);
+
+        await using (var stream = new FileStream(config.Uploads(fileName: fileName), FileMode.Create))
         {
             await file.CopyToAsync(stream);
         }
-
-        await CompressImage(file: file);
 
 
         var fileRecord = new FileRecord
@@ -45,36 +49,54 @@ public class FileUploadController(AppDbContext context, IConfiguration config) :
 
         await context.SaveChangesAsync();
 
-        return Ok(new
-            {
-                fileRecord.Id,
-                fileRecord.FileName,
-                fileRecord.FileSize,
-            }
-        );
+        return Ok(mapper.Map<FileDto>(x));
     }
 
-    private async Task CompressImage(IFormFile file)
+    [HttpDelete]
+    public async Task<IActionResult> DeleteFile(int id)
+    {
+        var file = await context.FileRecords.FindAsync(id);
+        if (file == null)
+        {
+            return NotFound();
+        }
+
+        context.FileRecords.Remove(file);
+        await context.SaveChangesAsync();
+
+        return Ok(mapper.Map<FileDto>(file));
+    }
+
+    private async Task CompressImage(IFormFile file, string fileName)
     {
         if (!file.FileName.IsImageByExtension()) return;
 
 
         using var image = await Image.LoadAsync(file.OpenReadStream());
+
+        var imageSize = image.Size;
+
         image.Mutate(x => x.Resize(new ResizeOptions
         {
-            Size = new Size(600 * 2, 800 * 2),
+            Size = new Size(imageSize.Width / 2, imageSize.Height / 2),
             Mode = ResizeMode.Max,
         }));
 
-
-        await image.SaveAsJpegAsync(path: config.Medium());
+        await image.SaveAsJpegAsync(path: config.Medium(fileName: fileName));
 
         image.Mutate(x => x.Resize(new ResizeOptions
         {
-            Size = new Size(150, 150), // Thumbnail size
+            Size = new Size(imageSize.Width / 6, imageSize.Height / 6),
             Mode = ResizeMode.Crop
         }));
+        await image.SaveAsJpegAsync(path: config.Thumb(fileName: fileName));
+    }
 
-        await image.SaveAsJpegAsync(path: config.Thumb());
+    [HttpGet]
+    public async Task<ActionResult<List<FileDto>>> GetAll()
+    {
+        AppProvider.Instance.BaseUrl = Request.BaseUrl();
+        var result = await context.FileRecords.ToListAsync();
+        return Ok(mapper.Map<List<FileDto>>(result));
     }
 }

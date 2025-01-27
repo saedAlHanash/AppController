@@ -18,9 +18,45 @@ public static class Extensions
         return validExtensions.Contains(fileExtension);
     }
 
-    public static string Uploads(this IConfiguration config) => Path.Combine(config["ResourcesPath"]!, "uploads");
+    public static string Uploads(this IConfiguration config, string? fileName = "")
+    {
+        var p = Path.Combine(config["ResourcesPath"]!, "uploads");
 
-    public static string Thumb(this IConfiguration config) => Path.Combine(config["ResourcesPath"]!, "thumbs");
+        if (!Directory.Exists(p))
+        {
+            Directory.CreateDirectory(p);
+        }
 
-    public static string Medium(this IConfiguration config) => Path.Combine(config["ResourcesPath"]!, "mediums");
+        return fileName == null ? p : Path.Combine(p, fileName);
+    }
+
+    public static string Thumb(this IConfiguration config, string? fileName = "")
+    {
+        var p = Path.Combine(config["ResourcesPath"]!, "thumbs");
+
+
+        if (!Directory.Exists(p))
+        {
+            Directory.CreateDirectory(p);
+        }
+
+        return fileName == null ? p : Path.Combine(p, fileName);
+    }
+
+    public static string Medium(this IConfiguration config, string? fileName = "")
+    {
+        var p = Path.Combine(config["ResourcesPath"]!, "mediums");
+
+        if (!Directory.Exists(p))
+        {
+            Directory.CreateDirectory(p);
+        }
+
+        return fileName == null ? p : Path.Combine(p, fileName);
+    }
+
+    public static string BaseUrl(this HttpRequest request)
+    {
+        return $"{request.Scheme}://{request.Host}";
+    }
 }

@@ -13,5 +13,5 @@ public class ProductDto
 
     public string Name { get; set; }
 
-    public FileImages Images { get; set; }
+    public FileDto Images { get; set; }
 }
