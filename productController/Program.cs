@@ -2,6 +2,7 @@ using Data;
 using Data.MappingProfiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using productController.Infrastructure.Middlewares;
 using productController.Services;
 
 
@@ -35,5 +36,6 @@ app.UseHttpsRedirection(); // إعادة توجيه الطلبات إلى HTTPS
 app.MapControllers(); // تعيين مسارات النقاط النهائية للتحكم
 
 app.UseStaticFiles();
+app.UseMiddleware<CustomMiddleware>();
 
 app.Run(); // تشغيل التطبيق

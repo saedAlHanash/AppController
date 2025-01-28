@@ -18,7 +18,7 @@ public class FileUploadController(AppDbContext context, IConfiguration config, I
     {
         var file = input.filel;
 
-        AppProvider.Instance.BaseUrl = Request.BaseUrl();
+  
 
         if (file.Length == 0)
         {
@@ -95,7 +95,7 @@ public class FileUploadController(AppDbContext context, IConfiguration config, I
     [HttpGet]
     public async Task<ActionResult<List<FileDto>>> GetAll()
     {
-        AppProvider.Instance.BaseUrl = Request.BaseUrl();
+
         var result = await context.FileRecords.ToListAsync();
         return Ok(mapper.Map<List<FileDto>>(result));
     }

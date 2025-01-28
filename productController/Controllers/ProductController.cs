@@ -10,28 +10,13 @@ namespace productController.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class ProductController : ControllerBase
+    public class ProductController(AppDbContext context, IMapper mapper) : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        private readonly FileService _fileService;
-
-        private readonly IMapper _mapper;
-
-        public ProductController(AppDbContext context, FileService fileService, IMapper mapper)
-        {
-            _context = context;
-            _fileService = fileService;
-            _mapper = mapper;
-        }
-
-
         [HttpGet]
         public async Task<ActionResult<List<ProductDto>>> GetProducts()
         {
-            AppProvider.Instance.BaseUrl = $"{Request.Scheme}://{Request.Host}";
-            var list = await _context.Products.Include(e => e.FileRecord).ToListAsync();
-            var response = _mapper.Map<List<ProductDto>>(list,
+            var list = await context.Products.Include(e => e.FileRecord).ToListAsync();
+            var response = mapper.Map<List<ProductDto>>(list,
                 opts =>
                 {
                     var baseUrl = $"{Request.Scheme}://{Request.Host}";
@@ -45,8 +30,7 @@ namespace productController.Controllers
         [HttpGet]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            AppProvider.Instance.BaseUrl = $"{Request.Scheme}://{Request.Host}";
-            var product = await _context.Products
+            var product = await context.Products
                 .Include(e => e.FileRecord)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -67,11 +51,11 @@ namespace productController.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(product).State = EntityState.Modified;
+            context.Entry(product).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
             }
 
             catch (DbUpdateConcurrencyException)
@@ -93,21 +77,21 @@ namespace productController.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(CreateProduct createProduct)
         {
-            var result = (await _context.Products.AddAsync(new Product
+            var file = await context.FileRecords.FindAsync(createProduct.FileId);
+
+            if (file == null)
+            {
+                return NotFound(); 
+            }
+
+            var result = (await context.Products.AddAsync(new Product
                 {
                     Name = createProduct.Name,
                     FileRecordId = createProduct.FileId,
                 }
             )).Entity;
 
-            await _context.SaveChangesAsync();
-
-            var file = await _context.FileRecords.FindAsync(result.FileRecordId);
-
-            if (result == null)
-            {
-                return NotFound(); // Handle the case where the product is not found
-            }
+            await context.SaveChangesAsync();
 
 
             return Ok(new
@@ -120,21 +104,21 @@ namespace productController.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            context.Products.Remove(product);
+            await context.SaveChangesAsync();
 
             return NoContent();
         }
 
         private bool ProductExists(int id)
         {
-            return _context.Products.Any(e => e.Id == id);
+            return context.Products.Any(e => e.Id == id);
         }
     }
 }
