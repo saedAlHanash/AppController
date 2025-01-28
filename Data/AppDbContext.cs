@@ -14,14 +14,15 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Product> Products { get; set; }
-    
-    public DbSet<ProductParam> ProductParams { get; set; }
-    
+
+
+    public DbSet<CustomParm> CustomParms { get; set; }
+
     public DbSet<User> User { get; set; }
-    
+
     public DbSet<Role> Roles { get; set; }
-    
+
     public DbSet<UserRole> UserRole { get; set; }
-    
+
     public DbSet<FileRecord> FileRecords { get; set; }
 }

@@ -11,5 +11,8 @@ public class ProductProfile : Profile
     {
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.FileRecord));
+        
+        CreateMap<Product, ProductDtoForList>()
+            .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.FileRecord));
     }
 }

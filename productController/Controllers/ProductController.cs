@@ -13,16 +13,10 @@ namespace productController.Controllers
     public class ProductController(AppDbContext context, IMapper mapper) : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<List<ProductDto>>> GetProducts()
+        public async Task<ActionResult<List<ProductDtoForList>>> GetProducts()
         {
             var list = await context.Products.Include(e => e.FileRecord).ToListAsync();
-            var response = mapper.Map<List<ProductDto>>(list,
-                opts =>
-                {
-                    var baseUrl = $"{Request.Scheme}://{Request.Host}";
-
-                    opts.Items["baseUrl"] = baseUrl;
-                });
+            var response = mapper.Map<List<ProductDtoForList>>(list);
             return Ok(response);
         }
 

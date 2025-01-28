@@ -22,6 +22,32 @@ namespace Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Data.Models.CustomParm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CustomParms");
+                });
+
             modelBuilder.Entity("Data.Models.FileRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -31,18 +57,22 @@ namespace Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FileName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FilePath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
                     b.Property<string>("MediumFilePath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ThumbFilePath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UploadedAt")
@@ -61,27 +91,6 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("FileRecordId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FileRecordId");
-
-                    b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("Data.Models.ProductParam", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<string>("AndroidDirectUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -89,6 +98,9 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("AndroidVersion")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FileRecordId")
                         .HasColumnType("int");
 
                     b.Property<string>("IosUrl")
@@ -100,14 +112,15 @@ namespace Data.Migrations
                     b.Property<bool>("IsIosTest")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("FileRecordId");
 
-                    b.ToTable("ProductParams");
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("Data.Models.Role", b =>
@@ -119,6 +132,7 @@ namespace Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -135,15 +149,19 @@ namespace Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Image")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -174,6 +192,17 @@ namespace Data.Migrations
                     b.ToTable("UserRole");
                 });
 
+            modelBuilder.Entity("Data.Models.CustomParm", b =>
+                {
+                    b.HasOne("Data.Models.Product", "Product")
+                        .WithMany("CustomParm")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Data.Models.Product", b =>
                 {
                     b.HasOne("Data.Models.FileRecord", "FileRecord")
@@ -183,17 +212,6 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("FileRecord");
-                });
-
-            modelBuilder.Entity("Data.Models.ProductParam", b =>
-                {
-                    b.HasOne("Data.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Data.Models.UserRole", b =>
@@ -213,6 +231,11 @@ namespace Data.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Data.Models.Product", b =>
+                {
+                    b.Navigation("CustomParm");
                 });
 
             modelBuilder.Entity("Data.Models.User", b =>
