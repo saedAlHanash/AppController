@@ -1,3 +1,4 @@
+using AutoMapper;
 using Data;
 using Data.DTOs;
 using Data.Models;
@@ -8,8 +9,16 @@ namespace productController.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class CustomParmController(AppDbContext context) : ControllerBase
+    public class CustomParmController(AppDbContext context, IMapper mapper) : ControllerBase
     {
+        [HttpGet]
+        public async Task<ActionResult<List<CustomParmDto>>> GetAll()
+        {
+            var result = await context.CustomParms.ToListAsync();
+
+            return Ok(mapper.Map<List<CustomParmDto>>(result));
+        }
+
         [HttpPut]
         public async Task<IActionResult> PutCustomParm(UpdateCustomParmDto customParm)
         {

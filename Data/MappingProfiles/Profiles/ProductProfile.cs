@@ -11,7 +11,10 @@ public class ProductProfile : Profile
     {
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.FileRecord));
-        
+
+        CreateMap<Product, UpdateProduct>()
+            .ForMember(dest => dest.FileId, opt => opt.MapFrom(src => src.FileRecordId)).ReverseMap();
+
         CreateMap<Product, ProductDtoForList>()
             .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.FileRecord));
     }

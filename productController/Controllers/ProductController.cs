@@ -22,10 +22,11 @@ namespace productController.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
             var product = await context.Products
                 .Include(e => e.FileRecord)
+                .Include(e => e.CustomParm)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
@@ -33,19 +34,21 @@ namespace productController.Controllers
                 return NotFound();
             }
 
-            return Ok(product);
+            return Ok(mapper.Map<ProductDto>(product));
         }
 
 
         [HttpPut()]
-        public async Task<IActionResult> PutProduct(Product product)
+        public async Task<IActionResult> PutProduct(UpdateProduct product)
         {
             if (product.Id == 0)
             {
                 return BadRequest();
             }
 
-            context.Entry(product).State = EntityState.Modified;
+            var p = mapper.Map<Product>(product);
+
+            context.Entry(p).State = EntityState.Modified;
 
             try
             {
@@ -54,7 +57,7 @@ namespace productController.Controllers
 
             catch (DbUpdateConcurrencyException)
             {
-                if (!ProductExists(product.Id))
+                if (!ProductExists(p.Id))
                 {
                     return NotFound();
                 }
@@ -75,7 +78,7 @@ namespace productController.Controllers
 
             if (file == null)
             {
-                return NotFound(); 
+                return NotFound();
             }
 
             var result = (await context.Products.AddAsync(new Product
